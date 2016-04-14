@@ -1,0 +1,96 @@
+#!/bin/bash
+
+#====================================================
+# Preparando o ambiente para cross-compiling na BBB
+#====================================================
+
+sudo apt-get install git # Caso o Git não esteja instalado
+
+# Bison:
+# Build Essentials: libc (bibliotecas padrão do C), gcc e g++ (GNU C Compiler)
+# Flex:
+# Git Core:
+sudo apt-get install bison build-essential flex git-core
+
+# LZMA e LZOP: algoritmos de compressão e descompressão
+# U-Boot tools: Construção do bootloader para a BBB
+# NCurses: Ambiente gráfico para o terminal (para visualizar os passos da compilação do kernel)
+sudo apt-get install device-tree-compiler lzma lzop u-boot-tools libncurses5-dev
+
+# DOSFS tools: Ferramenta para particionar o cartão SD em FAT (partição do bootloader)
+sudo apt-get install dosfstools
+
+dpkg --add-architecture i386 # Adiciona à lista de repositórios do sistema anfitrião pacotes com arquitetura x86
+apt-get update
+apt-get install libc6:i386 libstdc++6:i386 libncurses5:i386 zlib1g:i386
+
+# Crie um diretório para organizar os recursos a serem baixados. Nomeei o diretório de TCC/.
+mkdir ~/TCC
+cd ~/TCC
+
+# Faz o download e descompacta os arquivos da toolchain para cross-compiling ARM (Linaro GCC ARM)
+wget -c -O - https://launchpad.net/linaro-toolchain-binaries/trunk/2013.10/+download/gcc-linaro-arm-linux-gnueabihf-4.8-2013.10_linux.tar.xz | tar xJvf -
+
+# Cria uma variável de ambiente redirecionando temporariamente o compilador padrão para o Linaro GCC
+# A versão do Linaro GCC pode ser verificada com o comando abaixo:
+# ${CC}gcc --version
+export CC=`pwd`/gcc-linaro-arm-linux-gnueabihf-4.8-2013.10_linux/bin/arm-linux-gnueabihf-
+
+#============================================================
+# Configurando o U-Boot para criação do bootloader para BBB
+#============================================================
+
+git clone git://git.denx.de/u-boot.git # Clonando repositório do U-Boot
+cd u-boot/
+
+# Instalação de patch no U-Boot com as configurações da BBB
+wget -c https://raw.github.com/eewiki/u-boot-patches/master/v2013.10/0001-am335x_evm-uEnv.txt-bootz-n-fixes.patch
+patch -p1 < 0001-am335x_evm-uEnv.txt-bootz-n-fixes.patch
+
+# Compilação do U-Boot para as plataformas compatíveis com a BBB
+make ARCH=arm CROSS_COMPILE=${CC} distclean
+make ARCH=arm CROSS_COMPILE=${CC} am335x_evm_config
+make ARCH=arm CROSS_COMPILE=${CC}
+cd ..
+
+#============================================================================
+# Compilação do compilador de device tree
+#
+# OBS: Se o erro "sudo: not found" ocorrer, instalar pacotes manualmente e
+# executar script shell novamente.
+#============================================================================
+
+wget -c https://raw.github.com/RobertCNelson/tools/master/pkgs/dtc.sh
+chmod +x dtc.sh
+./dtc.sh
+
+#============================================================================
+# Compilação do kernel
+#
+# Atenção: Este passo pode dar muito errado! Só para os fortes.
+#============================================================================
+
+# Clonando o repositório mainline do kernel do Linux
+# Atenção: Este passo pode levar alguns minutos para completar.
+git clone git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
+
+# Clonando o script de config. de kernel feito por Robert C. Nelson especialmente para BBB. THX Robert!
+git clone git://github.com/RobertCNelson/linux-dev.git
+cd linux-dev/
+cp system.sh.sample system.sh
+
+# Edição do script system.sh
+# Encontre as variáveis abaixo e substitua pelo caminho correto onde se encontram o GCC e o repositório do kernel.
+# No nosso caso: ~/TCC
+CC=~/TCC/gcc-linaro-arm-linux-gnueabihf-4.8-2013.10_linux/bin/arm-linux-gnueabihf-
+LINUX_GIT=~/TCC/linux-stable/
+
+# Realizar o checkout da versão de kernel a ser usada e compilar. No nosso caso, devemos usar a versão 3.0 para o MOSIX.
+git checkout origin/am33x-v3.0.x -b tmp-3.0
+./build_kernel.sh
+cd ..
+
+# Aplicando os patches do MOSIX
+@TODO MOSIX patches
+
+
