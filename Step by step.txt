@@ -75,19 +75,12 @@ chmod +x dtc.sh
 git clone git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
 
 # Clonando o script de config. de kernel feito por Robert C. Nelson especialmente para BBB. THX Robert!
-git clone git://github.com/RobertCNelson/linux-dev.git
-cd linux-dev/
-cp system.sh.sample system.sh
-
-# Edição do script system.sh
-# Encontre as variáveis abaixo e substitua pelo caminho correto onde se encontram o GCC e o repositório do kernel.
-# No nosso caso: ~/TCC
-CC=~/TCC/gcc-linaro-arm-linux-gnueabihf-4.8-2013.10_linux/bin/arm-linux-gnueabihf-
-LINUX_GIT=~/TCC/linux-stable/
+git clone git://github.com/RobertCNelson/kernel.git
+cd kernel/
 
 # Realizar o checkout da versão de kernel a ser usada e compilar. No nosso caso, devemos usar a versão 3.0 para o MOSIX.
-git checkout origin/am33x-v3.0.x -b tmp-3.0
-./build_kernel.sh
+git checkout origin/beaglebone-3.2
+./patch.sh
 cd ..
 
 # Aplicando os patches do MOSIX
