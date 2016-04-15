@@ -29,7 +29,7 @@ mkdir ~/TCC
 cd ~/TCC
 
 # Faz o download e descompacta os arquivos da toolchain para cross-compiling ARM (Linaro GCC ARM)
-wget -c -O - https://launchpad.net/linaro-toolchain-binaries/trunk/2013.10/+download/gcc-linaro-arm-linux-gnueabihf-4.8-2013.10_linux.tar.xz | tar xJvf -
+curl -c -O - https://launchpad.net/linaro-toolchain-binaries/trunk/2013.10/+download/gcc-linaro-arm-linux-gnueabihf-4.8-2013.10_linux.tar.xz | tar xJvf -
 
 # Cria uma variável de ambiente redirecionando temporariamente o compilador padrão para o Linaro GCC
 # A versão do Linaro GCC pode ser verificada com o comando abaixo:
@@ -44,7 +44,7 @@ git clone git://git.denx.de/u-boot.git # Clonando repositório do U-Boot
 cd u-boot/
 
 # Instalação de patch no U-Boot com as configurações da BBB
-wget -c https://raw.github.com/eewiki/u-boot-patches/master/v2013.10/0001-am335x_evm-uEnv.txt-bootz-n-fixes.patch
+wget -c https://rcn-ee.com/repos/git/u-boot-patches/v2016.03/0001-am335x_evm-uEnv.txt-bootz-n-fixes.patch
 patch -p1 < 0001-am335x_evm-uEnv.txt-bootz-n-fixes.patch
 
 # Compilação do U-Boot para as plataformas compatíveis com a BBB
