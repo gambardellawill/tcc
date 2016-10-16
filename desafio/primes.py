@@ -1,5 +1,8 @@
 # *-* coding: utf-8 -*-
 
+# MPI code for finding prime numbers on a specific given range
+# Author: William Gambardella
+
 # Use: mpirun -np 4 -machinefile ../api/machinefile python primes.py -n nceiling
 
 from mpi4py import MPI as mpi
@@ -28,26 +31,12 @@ def vectorSize(numOfProcesses,sequenceSize, rankNumber):
 def isPrime(workingSieve, primeFactor):
     primeVector = []
 
-    """for position in range(0,len(workingSieve)):
-        if workingSieve[position]%2 == 0:
-            primeVector.append(0)
-        else:
-            primeFactor = 3
-            while (primeFactor*primeFactor) <= workingSieve[position]:
-                if workingSieve[position]%primeFactor == 0:
-                    primeVector.append(0)
-                else:
-                    primeFactor += 2
-            primeVector.append(workingSieve[position])
-        print primeVector"""
-
     for pos in range(0,len(workingSieve)):
-        if workingSieve[pos] == 2:
+        if workingSieve[pos] == primeFactor:
             primeVector.append(workingSieve[pos])
-        elif workingSieve[pos]%2 != 0:
+        elif workingSieve[pos]%primeFactor != 0:
             primeVector.append(workingSieve[pos])
 
-    print primeVector
     return primeVector
 
 print "I'm process number %d" % rank
@@ -62,14 +51,19 @@ resultBufferSize = 0
 displs = []
 counts = []
 pfactor = 2
+returnVecLength = 0
+returnSizes = []
+receiveDispls = []
+returnBuffer = None
+
+startTime = mpi.Wtime() # Starts the MPI process clock
 
 if rank==0:
     cmdargs = sys.argv
     nceiling = int(cmdargs[2])
     mainSieve = np.arange(2,nceiling+1,dtype=np.float)
 
-nceiling = comm.bcast(nceiling, root=0)
-print "I'm process number %d and the ceiling number is %d" % (rank,nceiling)
+nceiling = comm.bcast(nceiling, root=0) # Broadcast the input number
 
 if rank == 0:
     for x in range(0,size):
@@ -80,14 +74,10 @@ if rank == 0:
             displs.append(counts[x-1]+displs[x-1])
 
     counts = tuple(counts)
-    #print counts
-
     displs = tuple(displs)
-    #print displs
 
 workerSieve = np.zeros(vectorSize(size,nceiling-1,rank))
 workerSieveBuffer = np.getbuffer(np.zeros(vectorSize(size,nceiling-1,rank)))
-
 comm.Barrier()
 
 if rank == 0:
@@ -95,12 +85,29 @@ if rank == 0:
 
 comm.Scatterv([msBuffer,counts,displs,mpi.DOUBLE],workerSieveBuffer, root=0)
 
-workerSieve = np.frombuffer(workerSieveBuffer)
+resultBuffer = np.frombuffer(workerSieveBuffer)
 
-resultBuffer = isPrime(workerSieve, 2)
+while(pfactor*pfactor <= nceiling):
+    resultBuffer = isPrime(resultBuffer, pfactor)
+    comm.Barrier()
+    pfactor += 1
 
-pfactorn = resultBuffer[0]
-if pfactorn == pfactor:
-    pfactorn = resultBuffer[1]
+returnVecLength = comm.allreduce(len(resultBuffer), op=mpi.SUM)
 
-pfactorn = comm.allreduce(pfactorn,op=mpi.MIN)
+returnSizes = comm.allgather(len(resultBuffer))
+
+for y in range(0,size):
+    if y == 0:
+        receiveDispls.append(0)
+    else:
+        receiveDispls.append(returnSizes[y-1]+receiveDispls[y-1])
+
+returnBuffer = np.getbuffer(np.zeros(returnVecLength))
+
+comm.Gatherv(np.getbuffer(np.asarray(resultBuffer)),[returnBuffer,tuple(returnSizes),tuple(receiveDispls),mpi.DOUBLE], root=0)
+
+if rank == 0:
+    returnBuffer = np.frombuffer(returnBuffer)
+    endTime = mpi.Wtime()
+    print returnBuffer
+    print "I took %f seconds to do it all." % (endTime-startTime)
