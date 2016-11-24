@@ -7,7 +7,7 @@
 
 from mpi4py import MPI as mpi
 import numpy as np
-import sys
+import socket
 import math
 
 comm = mpi.COMM_WORLD
@@ -39,9 +39,13 @@ if rank == 0:
     del primeVector[-1]
     print primeVector
 
-myPrime = comm.scatter(primeVector, myPrime, root=0)
+hostname = socket.gethostname()
 
-print ("I'm process %s and I've received %s as my prime number" % (rank,myPrime))
+print ("%s - process %d" % (hostname,rank))
+
+myPrime = comm.scatter(primeVector,root = 0)
+
+print ("%s - rank %d : received %s as my prime number" % (hostname,rank,myPrime))
 
 for x in range(0,4):
     startTime = mpi.Wtime()
@@ -57,4 +61,9 @@ for x in range(0,4):
 
     print ("Process %s: %s is %s a prime number.'\n'I took %f seconds." % (rank,myPrime,answer,(endTime-startTime)))
 
-print attempts
+attemptsList = comm.gather([hostname,rank,attempts], root=0)
+
+"""if rank == 0:
+    f = open('attempts.txt','w')
+    f.write(str(attemptsList))
+    f.close()"""

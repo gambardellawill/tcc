@@ -1,1 +1,3 @@
-127.0.0.1
+192.168.1.148 max-slots=2
+beaglebone max-slots=1
+192.168.1.149 max-slots=4
