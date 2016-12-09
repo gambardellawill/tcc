@@ -2,8 +2,8 @@
 
 from mpi4py import MPI as mpi
 from math import pow,sqrt
+from PIL import Image
 import numpy as np
-import Image
 import kernel
 import mainops
 

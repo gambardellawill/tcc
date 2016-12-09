@@ -3,7 +3,6 @@
 from mpi4py import MPI as mpi
 from math import pow,sqrt
 import numpy as np
-import Image
 import kernel
 import mainops
 
