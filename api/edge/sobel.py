@@ -2,7 +2,6 @@
 
 from mpi4py import MPI as mpi
 from math import pow,sqrt
-from PIL import Image
 import numpy as np
 import kernel
 import mainops
@@ -62,14 +61,9 @@ def singleton_sobel(bwArray):
 
     return sobelArray
 
-def distrib_sobel(bwArray,comm,root):
-    if comm.Get_rank() == root:
-        sobelKernel = np.zeros((3,3))
-
-        height = bwArray.shape[0]
-        width = bwArray.shape[1]
-
-        sobelArray = np.zeros((height,width))
+def distrib_sobel(bwArray):
+    height = bwArray.shape[0]
+    width = bwArray.shape[1]
 
     xOperator = np.array([
     [-1,0,1],[-2,0,2],[-1,0,1]
@@ -78,5 +72,7 @@ def distrib_sobel(bwArray,comm,root):
     yOperator = np.array([
     [-1,-2,-1],[0,0,0],[1,2,1]
     ])
+
+    sobelArray = kernel.kernel_scan(bwArray,xOperator)
 
     return sobelArray

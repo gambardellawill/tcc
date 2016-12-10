@@ -13,7 +13,7 @@ def info_flag():
 def save_image(nArray, outputFile):
     imageData = Image.fromarray(np.asarray(np.clip(nArray,0,255), dtype="uint8"), "L")
     imageData.save(outputFile)
-    imageData.show()
+    #imageData.show()
 
 def load_image(inputFile):
     imageRaw = Image.open(inputFile)
@@ -69,10 +69,4 @@ def partition(imageDimensions,comm):
     sizetup = get_size_tuple(imageDimensions,get_split_lines(imageDimensions,comm),comm)
     disptup = get_displacements_tuple(sizetup,comm)
 
-    #print sizetup
-    #print disptup
-
     return [sizetup,disptup]
-
-def collect():
-    return 0

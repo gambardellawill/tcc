@@ -6,12 +6,26 @@ import numpy as np
 import kernel
 import mainops
 
-def gaussianBlur(bwArray)
-    gaussianBlurKernel = np.zeros((3,3))
-
+def gaussianBlur(bwArray):
     height = bwArray.shape[0]
     width = bwArray.shape[1]
 
     gaussianBlurKernel = np.array([
-    [0,1,0],[-2,0,2],[-1,0,1]
+    [1,2,1],[2,4,2],[1,2,1]
     ])
+
+    blurryArray = kernel.kernel_scan(bwArray,gaussianBlurKernel)
+
+    return blurryArray
+
+def boxBlur(bwArray):
+    height = bwArray.shape[0]
+    width = bwArray.shape[1]
+
+    boxBlurKernel = np.array([
+    [1,1,1],[1,1,1],[1,1,1]
+    ])
+
+    blurryArray = kernel.kernel_scan(bwArray,boxBlurKernel)
+
+    return blurryArray
